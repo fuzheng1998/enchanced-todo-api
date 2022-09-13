@@ -1,0 +1,10 @@
+name: COMP9900
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - flask
+  - flask-restful
+  - flask-jwt-extended
+  - flask-sqlalchemy
+prefix: /opt/homebrew/Caskroom/miniforge/base/envs/COMP9900
