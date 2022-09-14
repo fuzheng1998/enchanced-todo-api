@@ -1,8 +1,6 @@
-from flask import Flask
-from flask_restful import reqparse, abort, Api, Resource
-
-app = Flask(__name__)
-api = Api(app)
+from flask_restful import reqparse, abort, Resource
+from config import *
+from model import User
 
 TODOS = {
     'todo1': {'task': 'build an API'},
@@ -14,6 +12,7 @@ TODOS = {
 def abort_if_todo_doesnt_exist(todo_id):
     if todo_id not in TODOS:
         abort(404, message="Todo {} doesn't exist".format(todo_id))
+
 
 parser = reqparse.RequestParser()
 parser.add_argument('task')
@@ -51,14 +50,13 @@ class TodoList(Resource):
         TODOS[todo_id] = {'task': args['task']}
         return TODOS[todo_id], 201
 
+
 ##
 ## Actually setup the Api resource routing here
 ##
-api.add_resource(TodoList, '/todos')
-api.add_resource(Todo, '/todos/<todo_id>')
+Api.add_resource(TodoList, '/todos')
+Api.add_resource(Todo, '/todos/<todo_id>')
 
-
-from flask import Flask
 from flask import jsonify
 from flask import request
 
@@ -69,17 +67,18 @@ from flask_jwt_extended import JWTManager
 
 # flask JWT extended
 # Setup the Flask-JWT-Extended extension
-app.config["JWT_SECRET_KEY"] = "super-secret"  # Change this!
-jwt = JWTManager(app)
+App.config["JWT_SECRET_KEY"] = "super-secret"  # Change this!
+jwt = JWTManager(App)
 
 
 # Create a route to authenticate your users and return JWTs. The
 # create_access_token() function is used to actually generate the JWT.
-@app.route("/login", methods=["POST"])
+@App.route("/login", methods=["POST"])
 def login():
     username = request.json.get("username", None)
     password = request.json.get("password", None)
-    if username != "test" or password != "test":
+    username_from_db = User.query.filter_by(username=username).first()
+    if username != username_from_db or password != "test":
         return jsonify({"msg": "Bad username or password"}), 401
 
     access_token = create_access_token(identity=username)
@@ -88,11 +87,13 @@ def login():
 
 # Protect a route with jwt_required, which will kick out requests
 # without a valid JWT present.
-@app.route("/protected", methods=["GET"])
+@App.route("/protected", methods=["GET"])
 @jwt_required()
 def protected():
     # Access the identity of the current user with get_jwt_identity
     current_user = get_jwt_identity()
     return jsonify(logged_in_as=current_user), 200
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    App.run(debug=True)
